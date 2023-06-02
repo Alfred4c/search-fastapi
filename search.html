@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+        }
+
+        .search-container {
+            width: 400px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #search-results {
+            list-style: none;
+            padding: 0;
+        }
+
+        #search-results li {
+            cursor: pointer;
+            padding: 5px;
+            background-color: #f2f2f2;
+        }
+
+        #result-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1>Search</h1>
+        <input type="text" id="search-input" placeholder="Enter search term">
+        <ul id="search-results"></ul>
+        <div id="result-container"></div>
+    </div>
+
+    <script>
+        function getSuggestions(searchTerm) {
+            return fetch("/get_suggestions?term=" + searchTerm)
+                .then(response => response.json())
+                .catch(error => {
+                    console.error("请求出错:", error);
+                });
+        }
+
+        function search(searchTerm) {
+            return fetch("/search?term=" + searchTerm)
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);
+                })
+                .catch(error => {
+                    console.error("请求出错:", error);
+                });
+        }
+
+        function displayResults(results) {
+            var resultContainer = document.getElementById("result-container");
+            resultContainer.innerHTML = ""; // 清空容器中的内容
+
+            var title = document.createElement("h2");
+            title.innerText = "搜索结果";
+            resultContainer.appendChild(title);
+            results.forEach(function(result) {
+                var p = document.createElement("p");
+                p.innerText = result;
+                resultContainer.appendChild(p);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var searchInput = document.getElementById("search-input");
+            var searchResults = document.getElementById("search-results");
+
+            searchInput.addEventListener("input", function() {
+                var searchTerm = searchInput.value;
+                getSuggestions(searchTerm)
+                    .then(suggestions => {
+                        searchResults.innerHTML = "";
+                        suggestions.forEach(function(suggestion) {
+                            var li = document.createElement("li");
+                            li.innerText = suggestion;
+                            searchResults.appendChild(li);
+                        });
+                    });
+            });
+
+            searchInput.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    var searchTerm = searchInput.value;
+                    search(searchTerm);
+                }
+            });
+
+            // 使用事件委托处理点击事件
+            searchResults.addEventListener("click", function(event) {
+                var target = event.target;
+                if (target.tagName === "LI") {
+                    var searchTerm = target.innerText;
+                    search(searchTerm);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
